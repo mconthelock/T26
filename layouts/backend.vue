@@ -1,4 +1,7 @@
 <script setup lang="ts">
+definePageMeta({
+    middleware: "auth"
+})
 
 import { useDisplay } from "vuetify"
 import Sidebar from "~/components/backendComponents/sidebar/Sidebar.vue"

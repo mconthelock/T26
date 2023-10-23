@@ -1,9 +1,6 @@
 <script setup lang="ts">
-  definePageMeta({
-    layout: "auth",
-  })
-
-  useHead({
+definePageMeta({layout: "auth"})
+useHead({
     title: 'เข้าสู่ระบบ',
     meta: [
       {
@@ -12,25 +9,43 @@
       },
       {
         name: 'Description',
-        content: 'เข้าสู่ระบบ Nuxt 3,  IT Genius Engineering'
+        content: 'เข้าสู่ระบบ'
       }
     ]
-  })
+})
 
+const router = useRouter()
 const checkbox = ref(false);
 const valid = ref(true);
 const show1 = ref(false);
 const password = ref("");
 const email = ref("");
-const passwordRules = ref([
-  (v: string) => !!v || "ต้องป้อนรหัสผ่าน",
-  (v: string) =>
-    (v && v.length > 8) || "รหัสผ่านต้องไม่น้อยกว่า 8 หลัก",
-]);
-const emailRules = ref([
-  (v: string) => !!v || "ต้องป้อนอีเมล์",
-  (v: string) => /.+@.+\..+/.test(v) || "รูปแบบอีเมล์ไม่ถูกต้อง",
-]);
+
+const {ruleRequired, ruleEmail, rulePassLen} = useFormRules()
+const submit = async () => {
+    if(ruleRequired(email.value) == true && ruleRequired(password.value) == true && ruleEmail(email.value) == true && rulePassLen(password.value) == true){
+        const config = useRuntimeConfig()
+        const api:string = config.public.api.url;
+
+        const {data, error} = await useFetch(`${api}/login`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                "email": email.value,
+                "password": password.value
+            })
+        })
+        if(error.value != null){
+            if(error.value.status === 400){
+                console.log('Error', error);
+            }
+        }else{
+            await router.push({path: '/backend/dashboard'})
+        }
+    }
+}
 </script>
 
 <template>
@@ -81,10 +96,11 @@ const emailRules = ref([
                   ref="form"
                   v-model="valid"
                   lazy-validation
+                  @submit.prevent ="submit"
                 >
                   <v-text-field
                     v-model="email"
-                    :rules="emailRules"
+                    :rules="[ruleRequired, ruleEmail]"
                     label="E-mail"
                     class="mt-4"
                     required
@@ -93,7 +109,7 @@ const emailRules = ref([
                   <v-text-field
                     v-model="password"
                     :counter="10"
-                    :rules="passwordRules"
+                    :rules="[ruleRequired, rulePassLen]"
                     label="Password"
                     class="mt-4"
                     required
@@ -115,7 +131,7 @@ const emailRules = ref([
                   </div>
                   <v-btn
                     color="primary"
-                    to="/backend/dashboard"
+                    type="submit"
                     block
                     class="py-6"
                     size="x-large"
